@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.8 — 2025-11-16
+
+### Changed
+- Help tips call out that Oracle is one-shot and does not remember prior runs, so every query should include full context.
+
 ## 1.0.7 — 2025-11-16
 
 ### Changed
