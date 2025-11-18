@@ -303,6 +303,56 @@ describe('api key logging', () => {
     // The line immediately before Answer should be blank (separator)
     expect(logLines[answerLineIndex - 1]).toBe('');
   });
+
+  test('verbose run spells out token labels', async () => {
+    const stream = new MockStream([], buildResponse());
+    const client = new MockClient(stream);
+    const logs: string[] = [];
+    await runOracle(
+      {
+        prompt: 'Verbose tokens',
+        model: 'gpt-5-pro',
+        background: false,
+        verbose: true,
+      },
+      {
+        apiKey: 'sk-test',
+        client,
+        log: (msg: string) => logs.push(msg),
+        write: () => true,
+      },
+    );
+
+    const finished = logs.find((line) => line.startsWith('Finished in '));
+    expect(finished).toBeDefined();
+    expect(finished).toContain('tokens (input/output/reasoning/total)=');
+    expect(finished).not.toContain('tok(i/o/r/t)=');
+  });
+
+  test('non-verbose run keeps short token label', async () => {
+    const stream = new MockStream([], buildResponse());
+    const client = new MockClient(stream);
+    const logs: string[] = [];
+    await runOracle(
+      {
+        prompt: 'Short tokens',
+        model: 'gpt-5-pro',
+        background: false,
+        verbose: false,
+      },
+      {
+        apiKey: 'sk-test',
+        client,
+        log: (msg: string) => logs.push(msg),
+        write: () => true,
+      },
+    );
+
+    const finished = logs.find((line) => line.startsWith('Finished in '));
+    expect(finished).toBeDefined();
+    expect(finished).toContain('tok(i/o/r/t)=');
+    expect(finished).not.toContain('tokens (input/output/reasoning/total)=');
+  });
 });
 
 describe('runOracle preview mode', () => {

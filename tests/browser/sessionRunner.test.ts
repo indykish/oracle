@@ -80,6 +80,75 @@ describe('runBrowserSessionExecution', () => {
     expect(log.mock.calls.some((call) => String(call[0]).includes('Browser attachments'))).toBe(true);
   });
 
+  test('verbose output spells out token labels', async () => {
+    const log = vi.fn();
+    await runBrowserSessionExecution(
+      {
+        runOptions: { ...baseRunOptions, verbose: true },
+        browserConfig: baseConfig,
+        cwd: '/repo',
+        log,
+        cliVersion,
+      },
+      {
+        assemblePrompt: async () => ({
+          markdown: 'prompt',
+          composerText: 'prompt',
+          estimatedInputTokens: 10,
+          attachments: [],
+          inlineFileCount: 0,
+          tokenEstimateIncludesInlineFiles: false,
+        }),
+        executeBrowser: async () => ({
+          answerText: 'text',
+          answerMarkdown: 'markdown',
+          tookMs: 100,
+          answerTokens: 5,
+          answerChars: 10,
+        }),
+      },
+    );
+
+    const finishedLine = log.mock.calls.map((c) => String(c[0])).find((line) => line.startsWith('Finished in '));
+    expect(finishedLine).toBeDefined();
+    expect(finishedLine).toContain('tokens (input/output/reasoning/total)=');
+  });
+
+  test('non-verbose output keeps short token label', async () => {
+    const log = vi.fn();
+    await runBrowserSessionExecution(
+      {
+        runOptions: { ...baseRunOptions, verbose: false },
+        browserConfig: baseConfig,
+        cwd: '/repo',
+        log,
+        cliVersion,
+      },
+      {
+        assemblePrompt: async () => ({
+          markdown: 'prompt',
+          composerText: 'prompt',
+          estimatedInputTokens: 10,
+          attachments: [],
+          inlineFileCount: 0,
+          tokenEstimateIncludesInlineFiles: false,
+        }),
+        executeBrowser: async () => ({
+          answerText: 'text',
+          answerMarkdown: 'markdown',
+          tookMs: 100,
+          answerTokens: 5,
+          answerChars: 10,
+        }),
+      },
+    );
+
+    const finishedLine = log.mock.calls.map((c) => String(c[0])).find((line) => line.startsWith('Finished in '));
+    expect(finishedLine).toBeDefined();
+    expect(finishedLine).toContain('tok(i/o/r/t)=');
+    expect(finishedLine).not.toContain('tokens (input/output/reasoning/total)=');
+  });
+
   test('passes heartbeat interval through to browser runner', async () => {
     const log = vi.fn();
     const executeBrowser = vi.fn(async () => ({
