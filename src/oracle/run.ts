@@ -195,7 +195,7 @@ export async function runOracle(options: RunOracleOptions, deps: RunOracleDeps =
       log(dim(pendingShortPromptTip));
     }
     if (options.model === 'gpt-5-pro') {
-      log(dim('Pro is thinking, this can take up to 60 minutes...'));
+      log(dim('Pro is thinking, this can take up to 60 minutes (usually replies within ~10 minutes)...'));
     }
     log(dim('Press Ctrl+C to cancel.'));
   }
