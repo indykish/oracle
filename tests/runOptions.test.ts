@@ -100,7 +100,7 @@ describe('resolveRunOptionsFromConfig', () => {
         model: 'gemini-3-pro',
         engine: 'browser',
       }),
-    ).toThrow('Gemini is only supported via API. Use --engine api.');
+    ).toThrow('Gemini and GPT-5.1 Codex models are API-only. Use --engine api.');
   });
 
   it('ignores config browser engine and forces api when model is gemini', () => {
@@ -111,6 +111,36 @@ describe('resolveRunOptionsFromConfig', () => {
     });
     expect(resolvedEngine).toBe('api');
     expect(runOptions.model).toBe('gemini-3-pro');
+  });
+
+  it('forces api engine for gpt-5.1-codex when engine is auto-detected', () => {
+    const { resolvedEngine, runOptions } = resolveRunOptionsFromConfig({
+      prompt: basePrompt,
+      model: 'gpt-5.1-codex',
+      env: {},
+    });
+    expect(resolvedEngine).toBe('api');
+    expect(runOptions.model).toBe('gpt-5.1-codex');
+  });
+
+  it('throws when browser engine is explicitly combined with gpt-5.1-codex', () => {
+    expect(() =>
+      resolveRunOptionsFromConfig({
+        prompt: basePrompt,
+        model: 'gpt-5.1-codex',
+        engine: 'browser',
+      }),
+    ).toThrow('Gemini and GPT-5.1 Codex models are API-only. Use --engine api.');
+  });
+
+  it('throws when browser engine is explicitly combined with multi-model codex runs', () => {
+    expect(() =>
+      resolveRunOptionsFromConfig({
+        prompt: basePrompt,
+        models: ['gpt-5.1-codex', 'gpt-5-pro'],
+        engine: 'browser',
+      }),
+    ).toThrow('GPT-5.1 Codex multi-model runs require --engine api.');
   });
 });
 

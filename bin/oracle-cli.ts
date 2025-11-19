@@ -145,7 +145,7 @@ program.hook('preAction', (thisCommand) => {
 });
 program
   .name('oracle')
-  .description('One-shot GPT-5 Pro / GPT-5.1 tool for hard questions that benefit from large file context and server-side search.')
+  .description('One-shot GPT-5 Pro / GPT-5.1 / GPT-5.1 Codex tool for hard questions that benefit from large file context and server-side search.')
   .version(VERSION)
   .argument('[prompt]', 'Prompt text (shorthand for --prompt).')
   .option('-p, --prompt <text>', 'User prompt to send to the model.')
@@ -165,7 +165,7 @@ program
   .option('-s, --slug <words>', 'Custom session slug (3-5 words).')
   .option(
     '-m, --model <model>',
-    'Model to target (gpt-5-pro | gpt-5.1, or ChatGPT labels like "5.1 Instant" for browser runs).',
+    'Model to target (gpt-5-pro | gpt-5.1 | gpt-5.1-codex, or ChatGPT labels like "5.1 Instant" for browser runs).',
     normalizeModelOption,
     'gpt-5-pro',
   )

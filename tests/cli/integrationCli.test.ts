@@ -54,4 +54,52 @@ describe('oracle CLI integration', () => {
 
     await rm(oracleHome, { recursive: true, force: true });
   }, 15000);
+
+  test('runs gpt-5.1-codex via API-only path', async () => {
+    const oracleHome = await mkdtemp(path.join(os.tmpdir(), 'oracle-codex-'));
+    const env = {
+      ...process.env,
+      OPENAI_API_KEY: 'sk-integration',
+      ORACLE_HOME_DIR: oracleHome,
+      ORACLE_CLIENT_FACTORY: CLIENT_FACTORY,
+      ORACLE_NO_DETACH: '1',
+    };
+
+    await execFileAsync(
+      process.execPath,
+      [TSX_BIN, CLI_ENTRY, '--prompt', 'Codex integration', '--model', 'gpt-5.1-codex'],
+      { env },
+    );
+
+    const sessionsDir = path.join(oracleHome, 'sessions');
+    const sessionIds = await readdir(sessionsDir);
+    expect(sessionIds.length).toBe(1);
+    const metadataPath = path.join(sessionsDir, sessionIds[0], 'meta.json');
+    const metadata = JSON.parse(await readFile(metadataPath, 'utf8'));
+    expect(metadata.model).toBe('gpt-5.1-codex');
+    expect(metadata.mode).toBe('api');
+    expect(metadata.usage?.totalTokens).toBe(20);
+
+    await rm(oracleHome, { recursive: true, force: true });
+  }, 15000);
+
+  test('rejects gpt-5.1-codex-max until OpenAI ships the API', async () => {
+    const oracleHome = await mkdtemp(path.join(os.tmpdir(), 'oracle-codex-max-'));
+    const env = {
+      ...process.env,
+      OPENAI_API_KEY: 'sk-integration',
+      ORACLE_HOME_DIR: oracleHome,
+      ORACLE_CLIENT_FACTORY: CLIENT_FACTORY,
+    };
+
+    await expect(
+      execFileAsync(
+        process.execPath,
+        [TSX_BIN, CLI_ENTRY, '--prompt', 'Codex Max integration', '--model', 'gpt-5.1-codex-max'],
+        { env },
+      ),
+    ).rejects.toThrow(/codex-max is not available yet/i);
+
+    await rm(oracleHome, { recursive: true, force: true });
+  }, 10000);
 });

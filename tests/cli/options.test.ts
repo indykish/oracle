@@ -101,6 +101,11 @@ describe('resolveApiModel', () => {
   test('accepts canonical names regardless of case', () => {
     expect(resolveApiModel('gpt-5-pro')).toBe('gpt-5-pro');
     expect(resolveApiModel('GPT-5.1')).toBe('gpt-5.1');
+    expect(resolveApiModel('GPT-5.1-CODEX')).toBe('gpt-5.1-codex');
+  });
+
+  test('rejects codex max until API is available', () => {
+    expect(() => resolveApiModel('gpt-5.1-codex-max')).toThrow('gpt-5.1-codex-max is not available yet');
   });
 
   test('rejects unknown names', () => {
@@ -112,12 +117,18 @@ describe('inferModelFromLabel', () => {
   test('returns canonical names when label already matches', () => {
     expect(inferModelFromLabel('gpt-5-pro')).toBe('gpt-5-pro');
     expect(inferModelFromLabel('gpt-5.1')).toBe('gpt-5.1');
+    expect(inferModelFromLabel('gpt-5.1-codex')).toBe('gpt-5.1-codex');
   });
 
   test('infers ChatGPT Instant variants as gpt-5.1', () => {
     expect(inferModelFromLabel('ChatGPT 5.1 Instant')).toBe('gpt-5.1');
     expect(inferModelFromLabel('5.1 thinking')).toBe('gpt-5.1');
     expect(inferModelFromLabel(' 5.1 FAST ')).toBe('gpt-5.1');
+  });
+
+  test('infers Codex labels', () => {
+    expect(inferModelFromLabel('ChatGPT Codex')).toBe('gpt-5.1-codex');
+    expect(inferModelFromLabel('Codex Max Studio')).toBe('gpt-5.1-codex');
   });
 
   test('falls back to pro when the label references pro', () => {

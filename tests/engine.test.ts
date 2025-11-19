@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveEngine, type EngineMode } from '../src/cli/engine.js';
+import { resolveEngine, defaultWaitPreference, type EngineMode } from '../src/cli/engine.js';
 
 // biome-ignore lint/style/useNamingConvention: env var names are uppercase with underscores
 const envWithKey = { ...process.env, OPENAI_API_KEY: 'sk-test' } as NodeJS.ProcessEnv;
@@ -25,5 +25,16 @@ describe('resolveEngine', () => {
   it('lets legacy --browser override everything', () => {
     const engine = resolveEngine({ engine: 'api', browserFlag: true, env: envWithKey });
     expect(engine).toBe<EngineMode>('browser');
+  });
+});
+
+describe('defaultWaitPreference', () => {
+  it('disables wait for gpt-5-pro API runs', () => {
+    expect(defaultWaitPreference('gpt-5-pro', 'api')).toBe(false);
+  });
+
+  it('keeps wait enabled for Codex and browser models', () => {
+    expect(defaultWaitPreference('gpt-5.1-codex', 'api')).toBe(true);
+    expect(defaultWaitPreference('gpt-5-pro', 'browser')).toBe(true);
   });
 });

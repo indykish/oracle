@@ -1,6 +1,8 @@
 export type TokenizerFn = (input: unknown, options?: Record<string, unknown>) => number;
 
-export type ModelName = 'gpt-5-pro' | 'gpt-5.1' | 'gemini-3-pro';
+export type ModelName = 'gpt-5-pro' | 'gpt-5.1' | 'gpt-5.1-codex' | 'gemini-3-pro';
+
+export type ReasoningEffort = 'low' | 'medium' | 'high';
 
 export interface AzureOptions {
   endpoint?: string;
@@ -17,11 +19,11 @@ export interface ModelConfig {
   model: ModelName;
   tokenizer: TokenizerFn;
   inputLimit: number;
-  pricing: {
+  pricing?: {
     inputPerToken: number;
     outputPerToken: number;
-  };
-  reasoning: { effort: 'high' } | null;
+  } | null;
+  reasoning: { effort: ReasoningEffort } | null;
 }
 
 export interface FileContent {
@@ -171,7 +173,7 @@ export interface OracleRequestBody {
     }>;
   }>;
   tools?: ToolConfig[];
-  reasoning?: { effort: 'high' };
+  reasoning?: { effort: ReasoningEffort };
   max_output_tokens?: number;
   background?: boolean;
   store?: boolean;

@@ -23,6 +23,16 @@ export const MODEL_CONFIGS: Record<ModelName, ModelConfig> = {
     },
     reasoning: { effort: 'high' },
   },
+  'gpt-5.1-codex': {
+    model: 'gpt-5.1-codex',
+    tokenizer: countTokensGpt5 as TokenizerFn,
+    inputLimit: 196000,
+    pricing: {
+      inputPerToken: 1.25 / 1_000_000,
+      outputPerToken: 10 / 1_000_000,
+    },
+    reasoning: { effort: 'high' },
+  },
   'gemini-3-pro': {
     model: 'gemini-3-pro',
     tokenizer: countTokensGpt5Pro as TokenizerFn,

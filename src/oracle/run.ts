@@ -108,7 +108,8 @@ export async function runOracle(options: RunOracleOptions, deps: RunOracleDeps =
       { model: options.model },
     );
   }
-  const useBackground = options.background ?? (options.model === 'gpt-5-pro');
+  const isLongRunningModel = options.model === 'gpt-5-pro';
+  const useBackground = options.background ?? isLongRunningModel;
 
   const inputTokenBudget = options.maxInput ?? modelConfig.inputLimit;
   const files = await readFiles(options.file ?? [], { cwd, fsModule });
@@ -151,7 +152,7 @@ export async function runOracle(options: RunOracleOptions, deps: RunOracleDeps =
   const richTty = process.stdout.isTTY && chalk.level > 0;
   const timeoutSeconds =
     options.timeoutSeconds === undefined || options.timeoutSeconds === 'auto'
-      ? options.model === 'gpt-5-pro'
+      ? isLongRunningModel
         ? DEFAULT_TIMEOUT_PRO_MS / 1000
         : DEFAULT_TIMEOUT_NON_PRO_MS / 1000
       : options.timeoutSeconds;
@@ -194,8 +195,8 @@ export async function runOracle(options: RunOracleOptions, deps: RunOracleDeps =
     if (pendingShortPromptTip) {
       log(dim(pendingShortPromptTip));
     }
-    if (options.model === 'gpt-5-pro') {
-      log(dim('Pro is thinking, this can take up to 60 minutes (usually replies within ~10 minutes)...'));
+    if (isLongRunningModel) {
+      log(dim('This model can take up to 60 minutes (usually replies much faster).'));
     }
     log(dim('Press Ctrl+C to cancel.'));
   }
@@ -403,13 +404,21 @@ export async function runOracle(options: RunOracleOptions, deps: RunOracleDeps =
   const outputTokens = usage.output_tokens ?? 0;
   const reasoningTokens = usage.reasoning_tokens ?? 0;
   const totalTokens = usage.total_tokens ?? inputTokens + outputTokens + reasoningTokens;
-  const cost = inputTokens * modelConfig.pricing.inputPerToken + outputTokens * modelConfig.pricing.outputPerToken;
+  const pricing = modelConfig.pricing ?? undefined;
+  const cost = pricing
+    ? inputTokens * pricing.inputPerToken + outputTokens * pricing.outputPerToken
+    : undefined;
 
   const elapsedDisplay = formatElapsed(elapsedMs);
   const statsParts: string[] = [];
-  const modelLabel = modelConfig.model + (modelConfig.reasoning ? '[high]' : '');
+  const effortLabel = modelConfig.reasoning?.effort;
+  const modelLabel = effortLabel ? `${modelConfig.model}[${effortLabel}]` : modelConfig.model;
   statsParts.push(modelLabel);
-  statsParts.push(formatUSD(cost));
+  if (cost != null) {
+    statsParts.push(formatUSD(cost));
+  } else {
+    statsParts.push('cost=N/A');
+  }
   const tokensDisplay = [inputTokens, outputTokens, reasoningTokens, totalTokens]
     .map((value, index) => formatTokenValue(value, usage, index))
     .join('/');
@@ -436,7 +445,7 @@ export async function runOracle(options: RunOracleOptions, deps: RunOracleDeps =
   return {
     mode: 'live',
     response,
-    usage: { inputTokens, outputTokens, reasoningTokens, totalTokens, cost },
+    usage: { inputTokens, outputTokens, reasoningTokens, totalTokens, ...(cost != null ? { cost } : {}) },
     elapsedMs,
   };
 }

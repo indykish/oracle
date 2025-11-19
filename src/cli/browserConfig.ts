@@ -10,7 +10,7 @@ const DEFAULT_BROWSER_TIMEOUT_MS = 1_200_000;
 const DEFAULT_BROWSER_INPUT_TIMEOUT_MS = 30_000;
 const DEFAULT_CHROME_PROFILE = 'Default';
 
-const BROWSER_MODEL_LABELS: Record<ModelName, string> = {
+const BROWSER_MODEL_LABELS: Partial<Record<ModelName, string>> = {
   'gpt-5-pro': 'GPT-5 Pro',
   'gpt-5.1': 'GPT-5.1',
   'gemini-3-pro': 'Gemini 3 Pro',

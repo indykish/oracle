@@ -40,16 +40,17 @@ export function resolveRunOptionsFromConfig({
       ? inferModelFromLabel(cliModelArg)
       : resolveApiModel(cliModelArg);
   const isGemini = resolvedModel.startsWith('gemini');
+  const isCodex = resolvedModel.startsWith('gpt-5.1-codex');
   // Keep the resolved model id alongside the canonical model name so we can log
   // and dispatch the exact identifier (useful for Gemini preview aliases).
   const effectiveModelId = isGemini ? resolveGeminiModelId(resolvedModel) : resolvedModel;
 
-  if (isGemini && browserRequested) {
-    throw new Error('Gemini is only supported via API. Use --engine api.');
+  if ((isGemini || isCodex) && browserRequested) {
+    throw new Error('Gemini and GPT-5.1 Codex models are API-only. Use --engine api.');
   }
-  // When Gemini is selected, always force API engine (overrides config/env auto browser).
+  // When Gemini or Codex is selected, always force API engine (overrides config/env auto browser).
   const fixedEngine: EngineMode =
-    isGemini || normalizedRequestedModels.length > 0 ? 'api' : resolvedEngine;
+    isGemini || isCodex || normalizedRequestedModels.length > 0 ? 'api' : resolvedEngine;
 
   const promptWithSuffix =
     userConfig?.promptSuffix && userConfig.promptSuffix.trim().length > 0
@@ -66,6 +67,10 @@ export function resolveRunOptionsFromConfig({
     normalizedRequestedModels.length > 0
       ? Array.from(new Set(normalizedRequestedModels.map((entry) => resolveApiModel(entry))))
       : [];
+  const includesCodexMultiModel = uniqueMultiModels.some((entry) => entry.startsWith('gpt-5.1-codex'));
+  if (includesCodexMultiModel && browserRequested) {
+    throw new Error('GPT-5.1 Codex multi-model runs require --engine api.');
+  }
 
   const runOptions: RunOracleOptions = {
     prompt: promptWithSuffix,

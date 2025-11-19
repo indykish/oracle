@@ -11,6 +11,7 @@ const MODEL_ID_MAP: Record<ModelName, string> = {
   'gemini-3-pro': 'gemini-3-pro-preview',
   'gpt-5-pro': 'gpt-5-pro', // unused, normalize TS map
   'gpt-5.1': 'gpt-5.1',
+  'gpt-5.1-codex': 'gpt-5.1-codex',
 };
 
 export function resolveGeminiModelId(modelName: ModelName): string {

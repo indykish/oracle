@@ -158,7 +158,7 @@ function inferCost(payload: NotificationContent): number | undefined {
   const usage = payload.usage;
   if (!model || !usage) return undefined;
   const config = MODEL_CONFIGS[model as keyof typeof MODEL_CONFIGS];
-  if (!config) return undefined;
+  if (!config?.pricing) return undefined;
   return (
     usage.inputTokens * config.pricing.inputPerToken +
     usage.outputTokens * config.pricing.outputPerToken
