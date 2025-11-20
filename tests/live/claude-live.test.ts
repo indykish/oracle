@@ -21,7 +21,9 @@ const hasKey = Boolean(process.env.ANTHROPIC_API_KEY);
         },
         { log: () => {}, write: () => true },
       );
-      expect(result.mode).toBe('live');
+      if (result.mode !== 'live') {
+        throw new Error(`Expected live result, received ${result.mode ?? 'unknown'}`);
+      }
       const text = extractTextOutput(result.response);
       expect(text?.length ?? 0).toBeGreaterThan(10);
     },

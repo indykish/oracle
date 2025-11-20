@@ -24,7 +24,9 @@ const hasKey = Boolean(process.env.GEMINI_API_KEY);
           write: () => true,
         },
       );
-      expect(result.mode).toBe('live');
+      if (result.mode !== 'live') {
+        throw new Error(`Expected live result, received ${result.mode ?? 'unknown'}`);
+      }
       const text = extractTextOutput(result.response);
       expect(text?.length ?? 0).toBeGreaterThan(10);
     },
