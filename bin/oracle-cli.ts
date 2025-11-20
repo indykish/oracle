@@ -777,9 +777,9 @@ async function runRootCommand(options: CliOptions): Promise<void> {
     if (copyMarkdown) {
       const result = await copyToClipboard(bundle.markdown);
       if (result.success) {
-        const via = result.command ? ` via ${result.command}` : '';
         const lineCount = bundle.markdown.split(/\r?\n/).length;
-        const summary = `Copied markdown to clipboard (${formatCompactNumber(bundle.markdown.length)} chars; ${formatCompactNumber(lineCount)} lines; ~${formatCompactNumber(estimatedTokens)} tokens).`;
+        const filesPart = bundle.files.length > 0 ? `; ${bundle.files.length} files` : '';
+        const summary = `Copied markdown to clipboard (${formatCompactNumber(bundle.markdown.length)} chars; ${formatCompactNumber(lineCount)} lines; ~${formatCompactNumber(estimatedTokens)} tokens${filesPart}).`;
         console.log(chalk.dim(summary));
       } else {
         const reason = result.error instanceof Error ? result.error.message : String(result.error ?? 'unknown error');
