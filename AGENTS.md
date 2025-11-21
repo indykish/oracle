@@ -8,6 +8,7 @@ Oracle-specific notes:
 - Session storage: Oracle stores session data under `~/.oracle`; delete it if you need a clean slate.
 - CLI output: the first line of any top-level CLI start banner should use the oracle emoji, e.g. `🧿 oracle (1.3.0) ...`. Avoid sprinkling the emoji elsewhere; only use it for the initial command headline. Exception: the TUI exit message also keeps the emoji.
 - Before a release, skim manual smokes in `docs/manual-tests.md` and rerun any that cover your change surface (especially browser/serve paths).
+- If browser smokes echo the prompt (Instant), rerun with `--browser-keep-browser --verbose` in tmux, then inspect DOM with `pnpm tsx scripts/browser-tools.ts eval ...` to confirm assistant turns exist; we fixed a case by refreshing assistant snapshots post-send.
 
 Browser-mode debug notes (ChatGPT URL override)
 - When a ChatGPT folder/workspace URL is set, Cloudflare can block automation even after cookie sync. Use `--browser-keep-browser` to leave Chrome open, solve the interstitial manually, then rerun.
