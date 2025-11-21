@@ -222,17 +222,26 @@ function looksLikePath(value: string): boolean {
 async function materializeCookieFile(sourcePath: string): Promise<string> {
   if (process.platform !== 'win32') return sourcePath;
   // Chrome can keep the Cookies DB locked; copy to a temp file so sqlite can open it reliably.
-  const tempPath = path.join(
-    os.tmpdir(),
-    `oracle-cookies-${Date.now().toString(36)}-${Math.random().toString(16).slice(2)}.sqlite`,
-  );
+  const resolved = await resolveDirectoryCandidate(sourcePath);
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'oracle-cookies-'));
+  const tempPath = path.join(tempDir, 'Cookies');
   try {
-    await fs.copyFile(sourcePath, tempPath);
-    return tempPath;
+    await fs.copyFile(resolved, tempPath);
+    return tempDir;
   } catch (error) {
     // Fall back to the original path if the copy fails; upstream error handling will surface issues.
-    return sourcePath;
+    return resolved;
   }
+}
+
+async function resolveDirectoryCandidate(inputPath: string): Promise<string> {
+  const stat = await fs.stat(inputPath).catch(() => null);
+  if (!stat?.isDirectory()) return inputPath;
+  const network = path.join(inputPath, 'Network', 'Cookies');
+  const direct = path.join(inputPath, 'Cookies');
+  if (await fileExists(network)) return network;
+  if (await fileExists(direct)) return direct;
+  return inputPath;
 }
 
 async function defaultProfileRoot(): Promise<string> {
