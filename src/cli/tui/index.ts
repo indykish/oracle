@@ -34,6 +34,7 @@ export interface LaunchTuiOptions {
 export async function launchTui({ version, printIntro = true }: LaunchTuiOptions): Promise<void> {
   const userConfig = (await loadUserConfig()).config;
   const rich = isTty();
+  let pagingFailures = 0;
   if (printIntro) {
     if (rich) {
       console.log(chalk.bold('🧿 oracle'), `${version}`, dim('— Whispering your tokens to the silicon sage'));
@@ -93,10 +94,20 @@ export async function launchTui({ version, printIntro = true }: LaunchTuiOptions
       prompt
         .then(({ selection: answer }) => resolve(answer))
         .catch((error) => {
+          pagingFailures += 1;
+          const message = error instanceof Error ? error.message : String(error);
           console.error(
             chalk.red('Paging failed; returning to recent list.'),
-            error instanceof Error ? error.message : error,
+            message,
           );
+          if (message.includes('setRawMode') || message.includes('EIO') || pagingFailures >= 3) {
+            console.error(
+              chalk.red('Terminal input unavailable; exiting TUI.'),
+              dim('Try `stty sane` then rerun oracle, or use `oracle recent`.'),
+            );
+            resolve('__exit__');
+            return;
+          }
           resolve('__reset__');
         });
     });
@@ -104,6 +115,7 @@ export async function launchTui({ version, printIntro = true }: LaunchTuiOptions
     if (process.env.ORACLE_DEBUG_TUI === '1') {
       console.error(`[tui] selection=${JSON.stringify(selection)}`);
     }
+    pagingFailures = 0;
 
     if (selection === '__exit__') {
       console.log(chalk.green('🧿 Closing the book. See you next prompt.'));
@@ -192,14 +204,21 @@ async function showSessionDetail(sessionId: string): Promise<void> {
       { name: 'Back', value: 'back' },
     ];
 
-    const { next } = await inquirer.prompt<{ next: string }>([
-      {
-        name: 'next',
-        type: 'select',
-        message: 'Actions',
-        choices: actions,
-      },
-    ]);
+    let next: string;
+    try {
+      ({ next } = await inquirer.prompt<{ next: string }>([
+        {
+          name: 'next',
+          type: 'select',
+          message: 'Actions',
+          choices: actions,
+        },
+      ]));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(chalk.red('Paging failed; returning to session list.'), message);
+      return;
+    }
     if (next === 'back') {
       return;
     }
