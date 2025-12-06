@@ -11,6 +11,7 @@
 - Browser engine now verifies each attachment shows up in the composer before sending (including remote/serve uploads), fixing cases where file selection succeeded but ChatGPT never received the files (e.g., WKWebView blank runs).
 - TUI exits gracefully when the terminal drops raw mode (e.g., `setRawMode EIO` after pager issues) instead of looping the paging error; prints a hint to run `stty sane`.
 - Ctrl+C in the TUI menu now exits cleanly without printing the paging error loop.
+- Exit banner is printed once when leaving the TUI (prevents duplicate “Closing the book” messages after SIGINT or exit actions).
 
 ## 0.5.1 — 2025-12-03
 
