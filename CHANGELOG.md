@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.4 — Unreleased
+
+### Fixed
+- Browser uploads: detect ChatGPT’s composer attachment chip (not echoed in the last user turn) to avoid false “Attachment did not appear” failures. Thanks Mariano Belinky (@mbelinky) for the fix.
+
 ## 0.5.3 — 2025-12-06
 
 ### Changed
