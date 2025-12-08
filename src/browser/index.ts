@@ -325,7 +325,8 @@ export async function runBrowserMode(options: BrowserRunOptions): Promise<Browse
       await raceWithDisconnect(waitForAttachmentCompletion(Runtime, waitBudget, logger));
       logger('All attachments uploaded');
     }
-    await raceWithDisconnect(submitPrompt({ runtime: Runtime, input: Input }, promptText, logger));
+    const attachmentNames = attachments.map((a) => path.basename(a.path));
+    await raceWithDisconnect(submitPrompt({ runtime: Runtime, input: Input, attachmentNames }, promptText, logger));
     stopThinkingMonitor = startThinkingStatusMonitor(Runtime, logger, options.verbose ?? false);
     const answer = await raceWithDisconnect(waitForAssistantResponse(Runtime, config.timeoutMs, logger));
     answerText = answer.text;
@@ -747,7 +748,8 @@ async function runRemoteBrowserMode(
       logger('All attachments uploaded');
     }
 
-    await submitPrompt({ runtime: Runtime, input: Input }, promptText, logger);
+    const attachmentNames = attachments.map((a) => path.basename(a.path));
+    await submitPrompt({ runtime: Runtime, input: Input, attachmentNames }, promptText, logger);
     stopThinkingMonitor = startThinkingStatusMonitor(Runtime, logger, options.verbose ?? false);
     const answer = await waitForAssistantResponse(Runtime, config.timeoutMs, logger);
     answerText = answer.text;

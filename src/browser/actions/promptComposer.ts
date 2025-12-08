@@ -19,11 +19,13 @@ const ENTER_KEY_EVENT = {
 const ENTER_KEY_TEXT = '\r';
 
 export async function submitPrompt(
-  deps: { runtime: ChromeClient['Runtime']; input: ChromeClient['Input'] },
+  deps: { runtime: ChromeClient['Runtime']; input: ChromeClient['Input']; attachmentNames?: string[] },
   prompt: string,
   logger: BrowserLogger,
 ) {
   const { runtime, input } = deps;
+
+  await waitForDomReady(runtime, logger);
   const encodedPrompt = JSON.stringify(prompt);
   const focusResult = await runtime.evaluate({
     expression: `(() => {
@@ -107,7 +109,7 @@ export async function submitPrompt(
     });
   }
 
-  const clicked = await attemptSendButton(runtime);
+  const clicked = await attemptSendButton(runtime, logger, deps?.attachmentNames);
   if (!clicked) {
     await input.dispatchKeyEvent({
       type: 'keyDown',
@@ -129,7 +131,32 @@ export async function submitPrompt(
   await clickAnswerNowIfPresent(runtime, logger);
 }
 
-async function attemptSendButton(Runtime: ChromeClient['Runtime']): Promise<boolean> {
+async function waitForDomReady(Runtime: ChromeClient['Runtime'], logger?: BrowserLogger) {
+  const deadline = Date.now() + 10_000;
+  while (Date.now() < deadline) {
+    const { result } = await Runtime.evaluate({
+      expression: `(() => {
+        const ready = document.readyState === 'complete';
+        const composer = document.querySelector('[data-testid*="composer"]') || document.querySelector('form');
+        const fileInput = document.querySelector('input[type="file"]');
+        return { ready, composer: Boolean(composer), fileInput: Boolean(fileInput) };
+      })()`,
+      returnByValue: true,
+    });
+    const value = result?.value as { ready?: boolean; composer?: boolean; fileInput?: boolean } | undefined;
+    if (value?.ready && value.composer) {
+      return;
+    }
+    await delay(150);
+  }
+  logger?.('Page did not reach ready/composer state within 10s; continuing cautiously.');
+}
+
+async function attemptSendButton(
+  Runtime: ChromeClient['Runtime'],
+  _logger?: BrowserLogger,
+  attachmentNames?: string[],
+): Promise<boolean> {
   const script = `(() => {
     ${buildClickDispatcher()}
     const selectors = ${JSON.stringify(SEND_BUTTON_SELECTORS)};
@@ -154,8 +181,31 @@ async function attemptSendButton(Runtime: ChromeClient['Runtime']): Promise<bool
     return 'clicked';
   })()`;
 
-  const deadline = Date.now() + 2_000;
+  const deadline = Date.now() + 8_000;
   while (Date.now() < deadline) {
+    const needAttachment = Array.isArray(attachmentNames) && attachmentNames.length > 0;
+    if (needAttachment) {
+      const ready = await Runtime.evaluate({
+        expression: `(() => {
+          const names = ${JSON.stringify(attachmentNames.map((n) => n.toLowerCase()))};
+          const match = (n, name) => (n?.textContent || '').toLowerCase().includes(name);
+          const chipsReady = names.every((name) =>
+            Array.from(document.querySelectorAll('[data-testid*="chip"],[data-testid*="attachment"],a,div,span')).some((node) => match(node, name)),
+          );
+          const inputsReady = names.every((name) =>
+            Array.from(document.querySelectorAll('input[type="file"]')).some((el) =>
+              Array.from(el.files || []).some((f) => f?.name?.toLowerCase?.().includes(name)),
+            ),
+          );
+          return chipsReady || inputsReady;
+        })()`,
+        returnByValue: true,
+      });
+      if (!ready?.result?.value) {
+        await delay(150);
+        continue;
+      }
+    }
     const { result } = await Runtime.evaluate({ expression: script, returnByValue: true });
     if (result.value === 'clicked') {
       return true;

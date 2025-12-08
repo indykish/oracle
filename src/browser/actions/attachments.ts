@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { readFile } from 'node:fs/promises';
 import type { ChromeClient, BrowserAttachment, BrowserLogger } from '../types.js';
 import { FILE_INPUT_SELECTORS, SEND_BUTTON_SELECTORS, UPLOAD_STATUS_SELECTORS } from '../constants.js';
 import { delay } from '../utils.js';
@@ -13,6 +14,30 @@ export async function uploadAttachmentFile(
   if (!dom) {
     throw new Error('DOM domain unavailable while uploading attachments.');
   }
+
+  // New ChatGPT UI hides the real file input behind a composer "+" menu; click it pre-emptively.
+  await runtime
+    .evaluate({
+      expression: `(() => {
+        const selectors = [
+          '#composer-plus-btn',
+          '[data-testid*="plus"]',
+          'button[aria-label*="Add files"]',
+          'button[aria-label*="attachment"]',
+        ];
+        for (const selector of selectors) {
+          const el = document.querySelector(selector);
+          if (el instanceof HTMLElement) {
+            el.click();
+            return true;
+          }
+        }
+        return false;
+      })()`,
+      returnByValue: true,
+    })
+    .catch(() => undefined);
+
   const documentNode = await dom.getDocument();
   const selectors = FILE_INPUT_SELECTORS;
   let targetNodeId: number | undefined;
@@ -27,12 +52,105 @@ export async function uploadAttachmentFile(
     await logDomFailure(runtime, logger, 'file-input');
     throw new Error('Unable to locate ChatGPT file attachment input.');
   }
+
+  // Skip re-uploads if the file is already attached.
+  const alreadyAttached = await runtime.evaluate({
+    expression: `(() => {
+      const expected = ${JSON.stringify(path.basename(attachment.path).toLowerCase())};
+      const inputs = Array.from(document.querySelectorAll('input[type="file"]')).some((el) =>
+        Array.from(el.files || []).some((f) => f?.name?.toLowerCase?.() === expected),
+      );
+      const chips = Array.from(document.querySelectorAll('[data-testid*="chip"],[data-testid*="attachment"],a,div,span')).some((n) =>
+        (n?.textContent || '').toLowerCase().includes(expected),
+      );
+      return inputs || chips;
+    })()`,
+    returnByValue: true,
+  });
+  if (alreadyAttached?.result?.value === true) {
+    logger(`Attachment already present: ${path.basename(attachment.path)}`);
+    return;
+  }
+
   await dom.setFileInputFiles({ nodeId: targetNodeId, files: [attachment.path] });
+  // Some ChatGPT composers expect an explicit change/input event after programmatic file selection.
+  const dispatchEvents = selectors
+    .map((selector) => `
+      (() => {
+        const el = document.querySelector(${JSON.stringify(selector)});
+        if (el instanceof HTMLInputElement) {
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      })();
+    `)
+    .join('\n');
+  await runtime.evaluate({ expression: `(function(){${dispatchEvents} return true;})()`, returnByValue: true });
   const expectedName = path.basename(attachment.path);
   const ready = await waitForAttachmentSelection(runtime, expectedName, 10_000);
   if (!ready) {
-    await logDomFailure(runtime, logger, 'file-upload');
-    throw new Error('Attachment did not register with the ChatGPT composer in time.');
+    // Fallback: inject via DataTransfer/File for UIs that ignore setFileInputFiles on hidden inputs.
+    const fileBuffer = await readFile(attachment.path);
+    const base64 = fileBuffer.toString('base64');
+    const injectResult = await runtime.evaluate({
+      expression: `(() => {
+        const selectors = ${JSON.stringify(selectors)};
+        const binary = atob(${JSON.stringify(base64)});
+        const len = binary.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+        const file = new File([bytes], ${JSON.stringify(expectedName)}, { type: 'application/octet-stream' });
+        let attached = false;
+        for (const selector of selectors) {
+          const el = document.querySelector(selector);
+          if (el instanceof HTMLInputElement) {
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            el.files = dt.files;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+            attached = attached || el.files?.length > 0;
+          }
+        }
+        return attached;
+      })()`,
+      returnByValue: true,
+    });
+    const injected = Boolean(injectResult?.result?.value);
+    if (!injected) {
+      // Final fallback: simulate a drag/drop onto the composer container with a DataTransfer File.
+      const dropResult = await runtime.evaluate({
+        expression: `(() => {
+          const containers = [
+            '[data-testid*="composer"]',
+            'form',
+            'main'
+          ];
+          const target = containers
+            .map((sel) => document.querySelector(sel))
+            .find((el) => el instanceof HTMLElement) as HTMLElement | undefined;
+          if (!target) return false;
+          const binary = atob(${JSON.stringify(base64)});
+          const len = binary.length;
+          const bytes = new Uint8Array(len);
+          for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+          const file = new File([bytes], ${JSON.stringify(expectedName)}, { type: 'application/octet-stream' });
+          const dt = new DataTransfer();
+          dt.items.add(file);
+          const fire = (type) => target.dispatchEvent(new DragEvent(type, { dataTransfer: dt, bubbles: true }));
+          fire('dragenter');
+          fire('dragover');
+          fire('drop');
+          return true;
+        })()`,
+        returnByValue: true,
+      });
+      const dropped = Boolean(dropResult?.result?.value);
+      if (!dropped) {
+        await logDomFailure(runtime, logger, 'file-upload');
+        throw new Error('Attachment did not register with the ChatGPT composer in time.');
+      }
+    }
   }
   await waitForAttachmentVisible(runtime, expectedName, 10_000, logger);
   logger('Attachment queued');
