@@ -1,6 +1,6 @@
 {
   "name": "@indykish/oracle",
-  "version": "0.8.7",
+  "version": "0.9.0",
   "description": "CLI wrapper around OpenAI Responses API with GPT-5.3 Pro, GPT-5.3, GPT-5.2, Gemini-3.5-Pro, Claude-4.6-Sonnet/Opus, and Grok-4.2 support.",
   "type": "module",
   "main": "dist/bin/oracle-cli.js",
