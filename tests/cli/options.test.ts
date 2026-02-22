@@ -228,7 +228,7 @@ describe("inferModelFromLabel", () => {
 	});
 
 	test("falls back to default model when label empty and to gpt-5.3 for other ambiguous strings", () => {
-		expect(inferModelFromLabel("")).toBe("gpt-5.2-pro");
+		expect(inferModelFromLabel("")).toBe("claude-4.6-sonnet");
 		expect(inferModelFromLabel("something else")).toBe("gpt-5.3");
 	});
 });

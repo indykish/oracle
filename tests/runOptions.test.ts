@@ -9,6 +9,7 @@ describe("resolveRunOptionsFromConfig", () => {
 	it("uses config engine when none provided and env lacks OPENAI_API_KEY", () => {
 		const { resolvedEngine } = resolveRunOptionsFromConfig({
 			prompt: basePrompt,
+			model: "gpt-5.3",
 			userConfig: { engine: "browser" },
 			env: {},
 		});
@@ -19,12 +20,13 @@ describe("resolveRunOptionsFromConfig", () => {
 		const { resolvedEngine } = resolveRunOptionsFromConfig({
 			prompt: basePrompt,
 			engine: "api",
+			model: "gpt-5.3",
 			userConfig: { engine: "browser" },
 		});
 		expect(resolvedEngine).toBe("api");
 	});
 
-	it("defaults to gpt-5.2-pro when model not provided", () => {
+	it("defaults to claude-4.6-sonnet when model not provided", () => {
 		const { runOptions } = resolveRunOptionsFromConfig({
 			prompt: basePrompt,
 		});
@@ -81,9 +83,9 @@ describe("resolveRunOptionsFromConfig", () => {
 		expect(runOptions.baseUrl).toBe("https://proxy.test/v1");
 	});
 
-	it("falls back to OPENAI_BASE_URL env", () => {
+	it("falls back to ANTHROPIC_BASE_URL env for default claude model", () => {
 		const env = {} as NodeJS.ProcessEnv;
-		env.OPENAI_BASE_URL = "https://env.example/v2";
+		env.ANTHROPIC_BASE_URL = "https://env.example/v2";
 		const { runOptions } = resolveRunOptionsFromConfig({
 			prompt: basePrompt,
 			env,
