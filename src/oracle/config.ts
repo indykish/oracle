@@ -5,7 +5,7 @@ import { countTokens as countTokensAnthropicRaw } from '@anthropic-ai/tokenizer'
 import { stringifyTokenizerInput } from './tokenStringifier.js';
 
 export const DEFAULT_MODEL: ModelName = 'gpt-5.2-pro';
-export const PRO_MODELS = new Set<ProModelName>(['gpt-5.1-pro', 'gpt-5-pro', 'gpt-5.2-pro', 'claude-4.5-sonnet', 'claude-4.1-opus']);
+export const PRO_MODELS = new Set<ProModelName>(['gpt-5.1-pro', 'gpt-5-pro', 'gpt-5.2-pro', 'gpt-5.3-pro', 'claude-4.5-sonnet', 'claude-4.6-sonnet', 'claude-4.1-opus', 'claude-4.6-opus']);
 
 const countTokensAnthropic: TokenizerFn = (input: unknown): number =>
   countTokensAnthropicRaw(stringifyTokenizerInput(input));
@@ -90,6 +90,28 @@ export const MODEL_CONFIGS: Record<KnownModelName, ModelConfig> = {
     },
     reasoning: { effort: 'xhigh' },
   },
+  'gpt-5.3': {
+    model: 'gpt-5.3',
+    provider: 'openai',
+    tokenizer: countTokensGpt5 as TokenizerFn,
+    inputLimit: 196000,
+    pricing: {
+      inputPerToken: 2 / 1_000_000,
+      outputPerToken: 16 / 1_000_000,
+    },
+    reasoning: { effort: 'xhigh' },
+  },
+  'gpt-5.3-pro': {
+    model: 'gpt-5.3-pro',
+    provider: 'openai',
+    tokenizer: countTokensGpt5Pro as TokenizerFn,
+    inputLimit: 196000,
+    pricing: {
+      inputPerToken: 25 / 1_000_000,
+      outputPerToken: 200 / 1_000_000,
+    },
+    reasoning: { effort: 'xhigh' },
+  },
   'gemini-3-pro': {
     model: 'gemini-3-pro',
     provider: 'google',
@@ -98,6 +120,19 @@ export const MODEL_CONFIGS: Record<KnownModelName, ModelConfig> = {
     pricing: {
       inputPerToken: 2 / 1_000_000,
       outputPerToken: 12 / 1_000_000,
+    },
+    reasoning: null,
+    supportsBackground: false,
+    supportsSearch: true,
+  },
+  'gemini-3.5-pro': {
+    model: 'gemini-3.5-pro',
+    provider: 'google',
+    tokenizer: countTokensGpt5Pro as TokenizerFn,
+    inputLimit: 200000,
+    pricing: {
+      inputPerToken: 3 / 1_000_000,
+      outputPerToken: 18 / 1_000_000,
     },
     reasoning: null,
     supportsBackground: false,
@@ -131,6 +166,34 @@ export const MODEL_CONFIGS: Record<KnownModelName, ModelConfig> = {
     supportsBackground: false,
     supportsSearch: false,
   },
+  'claude-4.6-sonnet': {
+    model: 'claude-4.6-sonnet',
+    apiModel: 'claude-sonnet-4-6',
+    provider: 'anthropic',
+    tokenizer: countTokensAnthropic,
+    inputLimit: 200000,
+    pricing: {
+      inputPerToken: 3 / 1_000_000,
+      outputPerToken: 15 / 1_000_000,
+    },
+    reasoning: null,
+    supportsBackground: false,
+    supportsSearch: false,
+  },
+  'claude-4.6-opus': {
+    model: 'claude-4.6-opus',
+    apiModel: 'claude-opus-4-6',
+    provider: 'anthropic',
+    tokenizer: countTokensAnthropic,
+    inputLimit: 200000,
+    pricing: {
+      inputPerToken: 15 / 1_000_000,
+      outputPerToken: 75 / 1_000_000,
+    },
+    reasoning: { effort: 'high' },
+    supportsBackground: false,
+    supportsSearch: false,
+  },
   'grok-4.1': {
     model: 'grok-4.1',
     apiModel: 'grok-4-1-fast-reasoning',
@@ -140,6 +203,21 @@ export const MODEL_CONFIGS: Record<KnownModelName, ModelConfig> = {
     pricing: {
       inputPerToken: 0.2 / 1_000_000,
       outputPerToken: 0.5 / 1_000_000,
+    },
+    reasoning: null,
+    supportsBackground: false,
+    supportsSearch: true,
+    searchToolType: 'web_search',
+  },
+  'grok-4.2': {
+    model: 'grok-4.2',
+    apiModel: 'grok-4-2',
+    provider: 'xai',
+    tokenizer: countTokensGpt5Pro as TokenizerFn,
+    inputLimit: 2_000_000,
+    pricing: {
+      inputPerToken: 0.3 / 1_000_000,
+      outputPerToken: 1.0 / 1_000_000,
     },
     reasoning: null,
     supportsBackground: false,

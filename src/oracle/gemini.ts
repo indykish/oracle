@@ -4,6 +4,7 @@ import type { ClientLike, ModelName, OracleRequestBody, OracleResponse, Response
 
 const MODEL_ID_MAP: Record<ModelName, string> = {
   'gemini-3-pro': 'gemini-3-pro-preview',
+  'gemini-3.5-pro': 'gemini-3.5-pro-preview',
   'gpt-5.1-pro': 'gpt-5.1-pro',
   'gpt-5-pro': 'gpt-5-pro',
   'gpt-5.1': 'gpt-5.1',
@@ -11,9 +12,14 @@ const MODEL_ID_MAP: Record<ModelName, string> = {
   'gpt-5.2': 'gpt-5.2',
   'gpt-5.2-instant': 'gpt-5.2-instant',
   'gpt-5.2-pro': 'gpt-5.2-pro',
+  'gpt-5.3': 'gpt-5.3',
+  'gpt-5.3-pro': 'gpt-5.3-pro',
   'claude-4.5-sonnet': 'claude-4.5-sonnet',
+  'claude-4.6-sonnet': 'claude-4.6-sonnet',
   'claude-4.1-opus': 'claude-4.1-opus',
+  'claude-4.6-opus': 'claude-4.6-opus',
   'grok-4.1': 'grok-4.1',
+  'grok-4.2': 'grok-4.2',
 };
 
 export function resolveGeminiModelId(modelName: ModelName): string {
