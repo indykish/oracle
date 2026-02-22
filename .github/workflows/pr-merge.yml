@@ -72,8 +72,13 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
+      - name: Setup Windows build tools (for Node 22)
+        if: matrix.os == 'windows-latest' && matrix.node == '22'
+        uses: ilammy/msvc-dev-cmd@v1
       - uses: pnpm/action-setup@v4
       - run: pnpm install --frozen-lockfile
+        env:
+          PYTHON: python3
       - run: pnpm run build
 
   pr-checklist:
