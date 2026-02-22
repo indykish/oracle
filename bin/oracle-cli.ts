@@ -272,7 +272,7 @@ program
   .option('-s, --slug <words>', 'Custom session slug (3-5 words).')
   .option(
     '-m, --model <model>',
-    'Model to target (gpt-5.2-pro default; also supports gpt-5.1-pro alias). Also gpt-5-pro, gpt-5.1, gpt-5.1-codex API-only, gpt-5.2, gpt-5.2-instant, gpt-5.2-pro, gemini-3-pro, claude-4.5-sonnet, claude-4.1-opus, or ChatGPT labels like "5.2 Thinking" for browser runs).',
+    'Model to target (claude-4.6-sonnet default; also gpt-5.3-pro, gpt-5.2-pro, gpt-5.2, gpt-5.1, gpt-5.1-pro, gpt-5.1-codex, gpt-5-pro, gpt-5.2-instant, gemini-3-pro, gemini-3.5-pro, claude-4.6-opus, claude-4.5-sonnet, claude-4.1-opus, grok-4.2, or ChatGPT labels like "5.2 Thinking" for browser runs).',
     normalizeModelOption,
   )
   .addOption(

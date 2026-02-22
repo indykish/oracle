@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.9.1 — 2026-02-22
+
+### Changed
+- **BREAKING**: Default model changed from `gpt-5.2-pro` to `claude-4.6-sonnet`.
+- Updated help text and CLI banner to reflect Claude-4.6-Sonnet as primary, GPT-5.3-Pro as secondary.
+- Model option help now includes all supported models: claude-4.6-sonnet, claude-4.6-opus, gpt-5.3-pro, etc.
+
 ## 0.9.0 — 2026-02-22
 
 ### Added
