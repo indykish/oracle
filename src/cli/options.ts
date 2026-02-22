@@ -182,22 +182,37 @@ export function resolveApiModel(modelValue: string): ModelName {
     return normalized as ModelName;
   }
   if (normalized.includes('grok')) {
-    return 'grok-4.1';
+    return normalized.includes('4.2') || normalized.includes('4-2') ? 'grok-4.2' : 'grok-4.1';
   }
   if (normalized.includes('claude') && normalized.includes('sonnet')) {
+    if (normalized.includes('4.6') || normalized.includes('4-6')) {
+      return 'claude-4.6-sonnet';
+    }
     return 'claude-4.5-sonnet';
   }
   if (normalized.includes('claude') && normalized.includes('opus')) {
+    if (normalized.includes('4.6') || normalized.includes('4-6')) {
+      return 'claude-4.6-opus';
+    }
     return 'claude-4.1-opus';
   }
   if (normalized === 'claude' || normalized === 'sonnet' || /(^|\b)sonnet(\b|$)/.test(normalized)) {
-    return 'claude-4.5-sonnet';
+    return 'claude-4.6-sonnet';
   }
   if (normalized === 'opus' || normalized === 'claude-4.1') {
     return 'claude-4.1-opus';
   }
+  if (normalized.includes('gemini')) {
+    return normalized.includes('3.5') || normalized.includes('3-5') ? 'gemini-3.5-pro' : 'gemini-3-pro';
+  }
   if (normalized.includes('5.0') || normalized === 'gpt-5-pro' || normalized === 'gpt-5') {
     return 'gpt-5-pro';
+  }
+  if (normalized.includes('5.3') && normalized.includes('pro')) {
+    return 'gpt-5.3-pro';
+  }
+  if (normalized.includes('5.3')) {
+    return 'gpt-5.3';
   }
   if (normalized.includes('5-pro') && !normalized.includes('5.1')) {
     return 'gpt-5-pro';
@@ -214,11 +229,8 @@ export function resolveApiModel(modelValue: string): ModelName {
     }
     return 'gpt-5.1-codex';
   }
-  if (normalized.includes('gemini')) {
-    return 'gemini-3-pro';
-  }
   if (normalized.includes('pro')) {
-    return 'gpt-5.2-pro';
+    return 'gpt-5.3-pro';
   }
   // Passthrough for custom/OpenRouter model IDs.
   return normalized as ModelName;
@@ -233,22 +245,28 @@ export function inferModelFromLabel(modelValue: string): ModelName {
     return normalized as ModelName;
   }
   if (normalized.includes('grok')) {
-    return 'grok-4.1';
+    return normalized.includes('4.2') || normalized.includes('4-2') ? 'grok-4.2' : 'grok-4.1';
   }
   if (normalized.includes('claude') && normalized.includes('sonnet')) {
-    return 'claude-4.5-sonnet';
+    return normalized.includes('4.6') || normalized.includes('4-6') ? 'claude-4.6-sonnet' : 'claude-4.5-sonnet';
   }
   if (normalized.includes('claude') && normalized.includes('opus')) {
-    return 'claude-4.1-opus';
+    return normalized.includes('4.6') || normalized.includes('4-6') ? 'claude-4.6-opus' : 'claude-4.1-opus';
   }
   if (normalized.includes('codex')) {
     return 'gpt-5.1-codex';
   }
   if (normalized.includes('gemini')) {
-    return 'gemini-3-pro';
+    return normalized.includes('3.5') || normalized.includes('3-5') ? 'gemini-3.5-pro' : 'gemini-3-pro';
   }
   if (normalized.includes('classic')) {
     return 'gpt-5-pro';
+  }
+  if ((normalized.includes('5.3') || normalized.includes('5_3')) && normalized.includes('pro')) {
+    return 'gpt-5.3-pro';
+  }
+  if (normalized.includes('5.3') || normalized.includes('5_3')) {
+    return 'gpt-5.3';
   }
   if ((normalized.includes('5.2') || normalized.includes('5_2')) && normalized.includes('pro')) {
     return 'gpt-5.2-pro';
@@ -275,7 +293,7 @@ export function inferModelFromLabel(modelValue: string): ModelName {
     return 'gpt-5.1-pro';
   }
   if (normalized.includes('pro')) {
-    return 'gpt-5.2-pro';
+    return 'gpt-5.3-pro';
   }
   if (normalized.includes('5.1') || normalized.includes('5_1')) {
     return 'gpt-5.1';
@@ -286,5 +304,5 @@ export function inferModelFromLabel(modelValue: string): ModelName {
   if (normalized.includes('instant') || normalized.includes('fast')) {
     return 'gpt-5.2-instant';
   }
-  return 'gpt-5.2';
+  return 'gpt-5.3';
 }

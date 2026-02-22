@@ -184,7 +184,7 @@ describe('oracle CLI integration', () => {
         '--prompt',
         'Multi run test prompt long enough',
         '--models',
-        'gpt-5.1,gemini-3-pro,claude-4.5-sonnet',
+        'gpt-5.1,gemini-3-pro,claude-4.6-sonnet',
       ],
       { env },
     );
@@ -198,7 +198,7 @@ describe('oracle CLI integration', () => {
       (m: { model: string }) => m.model,
     );
     expect(selectedModels).toEqual(
-      expect.arrayContaining(['gpt-5.1', 'gemini-3-pro', 'claude-4.5-sonnet']),
+      expect.arrayContaining(['gpt-5.1', 'gemini-3-pro', 'claude-4.6-sonnet']),
     );
     expect(metadata.status).toBe('completed');
 
@@ -246,7 +246,7 @@ describe('oracle CLI integration', () => {
       (m: { model: string }) => m.model,
     );
     expect(selectedModels).toEqual(
-      expect.arrayContaining(['gpt-5.1', 'gemini-3-pro', 'claude-4.5-sonnet']),
+      expect.arrayContaining(['gpt-5.1', 'gemini-3-pro', 'claude-4.6-sonnet']),
     );
     expect(metadata.status).toBe('completed');
 

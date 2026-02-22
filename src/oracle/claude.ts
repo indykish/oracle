@@ -126,6 +126,12 @@ export function createClaudeClient(
 }
 
 export function resolveClaudeModelId(modelName: string): string {
+  if (modelName === 'claude-4.6-sonnet') {
+    return 'claude-sonnet-4-6';
+  }
+  if (modelName === 'claude-4.6-opus') {
+    return 'claude-opus-4-6';
+  }
   if (modelName === 'claude-4.5-sonnet' || modelName === 'claude-sonnet-4-5-20241022') {
     return 'claude-sonnet-4-5';
   }

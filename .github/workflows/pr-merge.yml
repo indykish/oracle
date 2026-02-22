@@ -1,0 +1,132 @@
+name: PR Merge Checks
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened, ready_for_review ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+      - run: pnpm run lint
+
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run test
+
+  model-config-tests:
+    name: Model Configuration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm vitest run tests/oracle/model-config.test.ts
+
+  build:
+    name: Build Verification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+
+  cross-platform:
+    name: Cross-Platform Build
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: ['20', '22']
+        exclude:
+          # @cdktf/node-pty-prebuilt-multiarch fails on Windows + Node 22 (upstream bug)
+          # TODO: Re-enable once https://github.com/cdktf/node-pty-prebuilt-multiarch is fixed
+          - os: windows-latest
+            node: '22'
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+
+  pr-checklist:
+    name: PR Checklist Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR Description
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body || '';
+            
+            const checks = {
+              hasDescription: body.length > 50,
+              mentionsTests: /test|spec/i.test(body),
+              mentionsDocs: /doc|changelog/i.test(body),
+            };
+            
+            console.log('PR Checklist Results:');
+            console.log('- Has description (>50 chars):', checks.hasDescription);
+            console.log('- Mentions tests:', checks.mentionsTests);
+            console.log('- Mentions docs:', checks.mentionsDocs);
+            
+            // This is informational, not blocking
+            return checks;
+
+  merge-ready:
+    name: Merge Ready Check
+    needs: [lint-and-typecheck, test, model-config-tests, build, cross-platform]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check all jobs passed
+        run: |
+          echo "Lint & Typecheck: ${{ needs.lint-and-typecheck.result }}"
+          echo "Test Suite: ${{ needs.test.result }}"
+          echo "Model Config Tests: ${{ needs.model-config-tests.result }}"
+          echo "Build Verification: ${{ needs.build.result }}"
+          echo "Cross-Platform: ${{ needs.cross-platform.result }}"
+          
+          if [[ "${{ needs.lint-and-typecheck.result }}" != "success" ]] || \
+             [[ "${{ needs.test.result }}" != "success" ]] || \
+             [[ "${{ needs.model-config-tests.result }}" != "success" ]] || \
+             [[ "${{ needs.build.result }}" != "success" ]] || \
+             [[ "${{ needs.cross-platform.result }}" != "success" ]]; then
+            echo "❌ Not all required checks passed"
+            exit 1
+          fi
+          
+          echo "✅ All checks passed - ready to merge!"

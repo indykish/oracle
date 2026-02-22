@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 0.9.0 — 2026-02-22
+
+### Added
+- Models: add `claude-4.6-sonnet` (API: `claude-sonnet-4-6`, $3/$15 per 1M tokens) and `claude-4.6-opus` (API: `claude-opus-4-6`, $15/$75).
+- Models: add `gpt-5.3` ($2/$16) and `gpt-5.3-pro` ($25/$200) — next OpenAI generation after 5.2.
+- Models: add `gemini-3.5-pro` (API: `gemini-3.5-pro-preview`, $3/$18) — latest Gemini generation.
+- Models: add `grok-4.2` (API: `grok-4-2`, $0.30/$1.00, 2M context) — latest xAI generation.
+
+### Fixed
+- Model resolution: `claude-sonnet-4-6` / `claude-opus-4-6` were silently downleveled to `claude-4.5-sonnet` / `claude-4.1-opus` — now correctly resolved.
+- `inferModelFromLabel`: Claude 4.6 variants were always returning 4.5 aliases regardless of version hint.
+- Fuzzy resolver: bare `--model pro` and unlabelled fallback now routes to `gpt-5.3-pro` instead of `gpt-5.2-pro`.
+- Fuzzy resolver: `grok` and `gemini` matchers are now version-aware (`4.2`, `3.5`).
+
+### Changed
+- Package renamed to `@indykish/oracle` (fork of `@steipete/oracle`).
+
 ## 0.8.7 — Unreleased
 
 ## 0.8.6 — 2026-02-09
